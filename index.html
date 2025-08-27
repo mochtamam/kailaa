@@ -1,163 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Kaila</title>
     <style>
-      body,
-      html {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-      }
-      /* Cover fullscreen */
-      .screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        font-family: sans-serif;
-        font-size: 1.5rem;
-        color: #fff;
-        z-index: 9999;
-      }
-      /* Spinner */
-      .spinner {
-        border: 8px solid #444;
-        border-top: 8px solid #fff;
-        border-radius: 50%;
-        width: 60px;
-        height: 60px;
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-      /* Error style */
-      .error-icon {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
-        color: #e74c3c;
-      }
-      .error-message {
-        margin-bottom: 1rem;
+      body {
+        font-family: "Poppins", sans-serif;
         text-align: center;
+        background: linear-gradient(
+          to right,
+          rgb(83, 157, 255),
+          rgb(0, 40, 216)
+        );
+        padding: 30px;
       }
-      .error-button {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        background: rgb(3, 0, 165);
-        color: #fff;
+
+      #puzzle-container {
+        display: grid;
+        grid-template-columns: repeat(4, 80px);
+        grid-gap: 15px;
+        justify-content: center;
+        margin-top: 40px;
+      }
+
+      .puzzle-piece {
         width: 80px;
-        height: 50px;
-      }
-      /* Popup backdrop */
-      #popup-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        display: none;
-        align-items: center;
+        height: 80px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        display: flex;
         justify-content: center;
-        z-index: 10000;
-      }
-      /* Popup box */
-      #popup {
-        background: #fff;
-        padding: 2rem;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        color: #333;
-      }
-      #popup button {
-        margin-top: 1rem;
-        padding: 0.5rem 1rem;
-        border: none;
-        background: rgb(3, 0, 165);
-        color: #fff;
-        border-radius: 4px;
+        align-items: center;
         cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+        transition: 0.3s;
+      }
+
+      .puzzle-piece.clicked {
+        background-color: rgb(0, 40, 218);
+        color: #fff;
+        pointer-events: none;
+      }
+
+      #final-message {
+        margin-top: 50px;
+      }
+
+      .final-image {
+        width: 200px;
+        border-radius: 20px;
+        margin-top: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Hide audio controls */
+      audio {
+        display: none;
       }
     </style>
   </head>
   <body>
-    <!-- Loading pertama -->
-    <div id="loading-spinner" class="screen" style="background: #222">
-      <div class="spinner"></div>
-      <div>Loading... please wait</div>
+    <h1>Sentuh Setiap Kotak, Ada Pesan Untukmu!</h1>
+
+    <div id="puzzle-container"></div>
+
+    <div id="final-message" style="display: none">
+      <h2>Selamat malam! Kamu Sudah Melewati Banyak Hal 💖</h2>
+      <img src="kaila.jpg" alt="Foto Kita" class="final-image" />
+      <p>Semangat terus sampe gelar S.Kom sah ada di belakang namamu🌸</p>
     </div>
 
-    <!-- Loading error kedua -->
-    <div
-      id="loading-error"
-      class="screen"
-      style="background: #333; display: none"
-    >
-      <div class="error-icon">✖️</div>
-      <div class="error-message">
-        Oops! Terjadi kesalahan. Silakan cek koneksi internet anda. Lalu coba
-        lagi.
-      </div>
-      <button class="error-button" onclick="onErrorButton()">OK</button>
-    </div>
+    <!-- Musik Background -->
+    <audio id="bg-music" autoplay loop>
+      <source src="anugerah.mp3" type="audio/mpeg" />
+      Browser kamu tidak mendukung audio.
+    </audio>
 
-    <!-- Popup -->
-    <div id="popup-backdrop">
-      <div id="popup" style="margin-left: 10px; margin-right: 10px;">
-        <h2>PRAAAANKKKK</h2>
-        <img
-          src="kaila.jpg"
-          alt="Prank Image"
-          style="
-            width: 200px;
-            height: auto;
-            margin-top: 1rem;
-            border-radius: 8px;
-          "
-        />
-        <h1>GOOD NIGHT😇</h1>
-        <h2>Kaila Najwa Olivia🤗</h2>
-        <button onclick="closePopup()">Close</button>
-      </div>
-    </div>
     <script>
-      // 1) Loading spinner selama 2 detik
-      setTimeout(function () {
-        document.getElementById("loading-spinner").style.display = "none";
-        // 2) Tampilkan loading error
-        document.getElementById("loading-error").style.display = "flex";
-      }, 10000);
+      const messages = [
+        "Kamu Perempuan Kuat 🍭",
+        "Kamu Cantik 💬",
+        "Kamu Hebat 🌈",
+        "Tetap senyum ya 😊",
+        "Jangan sering-sering badmood ❤️",
+        "Semangat Cantik 😎",
+        "Kamu Gemesin 🤭",
+        "Senyummu candu 😍",
+        "Kamu luar biasa ✨",
+        "Jangan telat makan😑",
+        "Peluk dari jauh 🤗",
+        "Kamu berharga 💎",
+        "Good Luck For Your Plan! 🙏",
+        "Sehat Sehat terus Ya 💌",
+        "Semangat Kuliahnya! 🔥",
+        "Good Luck 💖",
+      ];
 
-      function onErrorButton() {
-        // Sembunyikan error dan langsung tampilkan popup
-        document.getElementById("loading-error").style.display = "none";
-        document.getElementById("popup-backdrop").style.display = "flex";
-      }
+      const container = document.getElementById("puzzle-container");
+      let clickedCount = 0;
 
-      function closePopup() {
-        document.getElementById("popup-backdrop").style.display = "none";
-        // (Opsional) tampilkan konten utama di sini:
-        // document.getElementById('main-content').style.display = 'block';
-      }
+      messages.forEach((msg, index) => {
+        const piece = document.createElement("div");
+        piece.className = "puzzle-piece";
+        piece.innerText = "Klik";
+
+        piece.addEventListener("click", () => {
+          piece.classList.add("clicked");
+          piece.innerText = messages[index];
+          clickedCount++;
+          if (clickedCount === messages.length) {
+            document.getElementById("final-message").style.display = "block";
+            window.scrollTo({
+              top: document.body.scrollHeight,
+              behavior: "smooth",
+            });
+          }
+        });
+
+        container.appendChild(piece);
+      });
+
+      // Play music on user interaction (beberapa browser perlu klik user dulu)
+      document.addEventListener("click", function () {
+        const music = document.getElementById("bg-music");
+        if (music.paused) {
+          music.play().catch(() => {});
+        }
+      });
     </script>
   </body>
 </html>
